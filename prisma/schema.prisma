@@ -32,7 +32,6 @@ model User {
 model WorkoutPlan {
   id          String       @id @default(uuid())
   name        String
-  coverImageUrl String?
   userId      String
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   workoutDays WorkoutDay[]
