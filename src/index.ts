@@ -5,7 +5,6 @@ import fastifySwagger from "@fastify/swagger";
 import fastifyApiReference from "@scalar/fastify-api-reference";
 import Fastify from "fastify";
 import {
-  jsonSchemaTransform,
   serializerCompiler,
   validatorCompiler,
   ZodTypeProvider,
@@ -36,7 +35,8 @@ await app.register(fastifySwagger, {
       },
     ],
   },
-  transform: jsonSchemaTransform,
+  // Swagger transform using zod schemas causes issues in some configurations.
+  // Omit `transform` so swagger generation falls back to default behavior.
 });
 
 await app.register(fastifyCors, {
