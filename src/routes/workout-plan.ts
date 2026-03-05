@@ -5,7 +5,7 @@ import { ZodTypeProvider } from "fastify-type-provider-zod";
 import { NotFoundError } from "../errors/index.js";
 import { auth } from "../lib/auth.js";
 import { ErrorSchema, WorkoutPlanSchema } from "../schemas/index.js";
-import { CreateWorkoutPlan } from "../usecases/CreateWorkoutPlan.js";
+import { CreateWorkoutPlan, OutputDto } from "../usecases/CreateWorkoutPlan.js";
 
 export const workoutPlanRoutes = async (app: FastifyInstance) => {
   app.withTypeProvider<ZodTypeProvider>().route({
@@ -23,19 +23,35 @@ export const workoutPlanRoutes = async (app: FastifyInstance) => {
     },
     handler: async (request, reply) => {
       try {
+        // Diagnostic logs to help debug missing session/cookie
+        app.log.debug(
+          { hasCookie: Boolean(request.headers.cookie) },
+          "workout-plans: incoming cookies",
+        );
+
         const session = await auth.api.getSession({
           headers: fromNodeHeaders(request.headers),
         });
+
+        app.log.debug(
+          { sessionPresent: Boolean(session) },
+          "workout-plans: session lookup result",
+        );
+
         if (!session) {
+          app.log.info(
+            "Unauthorized request to /workout-plans: no valid session",
+          );
           return reply.status(401).send({
             error: "Unauthorized",
             code: "UNAUTHORIZED",
           });
         }
         const createWorkoutPlan = new CreateWorkoutPlan();
-        const result = await createWorkoutPlan.execute({
+        const result: OutputDto = await createWorkoutPlan.execute({
           userId: session.user.id,
           name: request.body.name,
+          coverImageUrl: (request.body as any).coverImageUrl,
           workoutDays: request.body.workoutDays,
         });
         return reply.status(201).send(result);

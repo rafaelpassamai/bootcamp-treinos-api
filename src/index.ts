@@ -40,7 +40,12 @@ await app.register(fastifySwagger, {
 });
 
 await app.register(fastifyCors, {
-  origin: ["http://localhost:3000"],
+  // Allow local dev frontends (common hostnames/ports)
+  origin: [
+    "http://localhost:3000",
+    "http://localhost:8081",
+    "http://127.0.0.1:8081",
+  ],
   credentials: true,
 });
 
@@ -130,17 +135,11 @@ app.route({
   },
 });
 // Initialize server
-app.listen({ port: 4000 }, (err) => {
-  if (err) {
-    app.log.error(err);
-    process.exit(1);
-  }
-  console.log("Server running on port 4000");
-});
-
-// Run the server!
+// Run the server (single listener). Default to port 8080 to match OpenAPI server URL.
+const PORT = Number(process.env.PORT) || 8080;
 try {
-  await app.listen({ port: Number(process.env.PORT) || 8081 });
+  await app.listen({ port: PORT });
+  console.log(`Server running on port ${PORT}`);
 } catch (err) {
   app.log.error(err);
   process.exit(1);

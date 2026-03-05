@@ -10,6 +10,7 @@ interface InputDto {
   name: string;
   workoutDays: Array<{
     name: string;
+    coverImageUrl?: string;
     weekDay: WeekDay;
     isRest: boolean;
     estimatedDurationInSeconds: number;
@@ -23,12 +24,27 @@ interface InputDto {
   }>;
 }
 
-// export interface OutputDto {
-
-// }
+export interface OutputDto {
+  id: string;
+  name: string;
+  workoutDays: Array<{
+    name: string;
+    coverImageUrl?: string;
+    weekDay: WeekDay;
+    isRest: boolean;
+    estimatedDurationInSeconds: number;
+    exercises: Array<{
+      order: number;
+      name: string;
+      sets: number;
+      reps: number;
+      restTimeInSeconds: number;
+    }>;
+  }>;
+}
 
 export class CreateWorkoutPlan {
-  async execute(dto: InputDto) {
+  async execute(dto: InputDto): Promise<OutputDto> {
     const existingWorkoutPlan = await prisma.workoutPlan.findFirst({
       where: {
         isActive: true,
@@ -61,6 +77,7 @@ export class CreateWorkoutPlan {
               weekDay: workoutDay.weekDay,
               isRest: workoutDay.isRest,
               estimatedDurationInSeconds: workoutDay.estimatedDurationInSeconds,
+              coverImageUrl: workoutDay.coverImageUrl ?? null,
               exercises: {
                 create: workoutDay.exercises.map((exercise) => ({
                   order: exercise.order,
@@ -90,7 +107,26 @@ export class CreateWorkoutPlan {
         throw new NotFoundError("Workout plan not found");
       }
 
-      return result;
+      const dtoResult: OutputDto = {
+        id: result.id,
+        name: result.name,
+        workoutDays: result.workoutDays.map((wd) => ({
+          name: wd.name,
+          coverImageUrl: wd.coverImageUrl ?? undefined,
+          weekDay: wd.weekDay,
+          isRest: wd.isRest,
+          estimatedDurationInSeconds: wd.estimatedDurationInSeconds,
+          exercises: wd.exercises.map((ex) => ({
+            order: ex.order,
+            name: ex.name,
+            sets: ex.sets,
+            reps: ex.reps,
+            restTimeInSeconds: ex.restTimeInSeconds,
+          })),
+        })),
+      };
+
+      return dtoResult;
     });
   }
 }
