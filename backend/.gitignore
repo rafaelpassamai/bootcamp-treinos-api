@@ -1,0 +1,8 @@
+node_modules/
+setup.txt
+/dist
+.env
+
+/src/generated/prisma
+
+coverage/
